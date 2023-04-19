@@ -37,18 +37,19 @@ async def get_list():
 
 @app.get("/todo/{todo_id}")
 async def get_todo(todo_id: int):
-    return await todo_pydantic_without_id.from_queryset_single(ToDo.get(id=todo_id))
+    return await todo_pydantic.from_queryset_single(ToDo.get(_id=todo_id))
+
 @app.post("/todo/new/")
-async def post_todo(title=Form(...), description=Form(...)):
+async def post_todo(title=Form(...), description=Form(None)):
     todo = await ToDo.create(title=title, description=description)
     return await todo_pydantic.from_tortoise_orm(todo)
 
-@app.put("/todo/{todo_id}", response_model=todo_pydantic)
+@app.put("/todo/{todo_id}")
 async def update_todo(todo_id: int, todo_object: todo_pydantic_without_id):
-    await ToDo.filter(id=todo_id).update(**todo_object.dict())
-    return await todo_pydantic_without_id.from_queryset_single(ToDo.get(id=todo_id))
+    todo = await ToDo.filter(_id=todo_id).update(**todo_object.dict())
+    return await todo_pydantic.from_queryset_single(ToDo.get(_id=todo_id))
 
 @app.delete("/todo/{todo_id}")
 async def delete_todo(todo_id: int):
-    await ToDo.filter(id=todo_id).delete()
+    await ToDo.filter(_id=todo_id).delete()
     return {"deletion_id": todo_id}
