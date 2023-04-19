@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Home
+{% endblock %}
+
+{% block content %}
+<div class="d-flex vh-100 justify-content-center align-items-center overflow-auto">
+    <div class="card w-25 h-50 border-primary">
+        <div class="card-header">To Do List</div>
+        <div class="card-body">
+            <ul class="list-group">
+                {% for todo in todos %}
+                    {% if todo.description is none %}
+                        <button type="btn" class="btn btn-outline-dark text-start my-1">{{ todo.title }}</button>
+                    {% else %}
+                        <button type="btn" class="btn btn-outline-dark text-start my-1">
+                            <div class="d-flex">
+                                <p class="flex-grow-1">{{ todo.title }}</p>
+                                <i class="bi bi-list"></i>
+                            </div>
+                        </button>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="card-footer">
+            <button class="btn btn-success w-100" type="button"> <i class="bi-plus-circle"></i> Add a new task</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

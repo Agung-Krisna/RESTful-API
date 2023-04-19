@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}
+Page not Found
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column bg-light vh-100 justify-content-center align-items-center">
+    <h3>Page not Found</h3>
+    <p>Perhaps you would like to go the Home page?</p>
+    <a href="{{ url_for('home') }}" class="btn btn-primary"><i class="bi-house"></i> Main Page</a>
+</div>
+{% endblock %}
