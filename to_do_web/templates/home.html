@@ -5,16 +5,68 @@ Home
 {% endblock %}
 
 {% block content %}
-<div class="d-flex vh-100 justify-content-center align-items-center overflow-auto">
+
+<!-- Modal Update -->
+<div class="modal fade" id="updateTodo" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update ToDo</h5>
+                <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- There is no PUT method in HTML, that's why we're going to implement it ourselves -->
+                <form method="PUT" id="update_form">
+                    <input type="hidden" name="id" id="id" value="">
+                    <label for="title" class="form-label" required>Title</label>
+                    <input type="text" class="form-control" id="title" name="title">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" name="description"></textarea>
+                </form>
+                <p class="text-danger d-none" id="warning_update">Title cannot be empty</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="delete" onclick="deleteTodo(this)" value="">Delete Data</button>
+                <button class="btn btn-success" id="update" onclick="submitForm()">Update Data</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal Create -->
+<div class="modal fade" id="createTodo">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create a To Do Activity</h5>
+                <button class="btn-close" type="button" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{api_endpoint}}todo/new/" method="POST" id="create_todo_form">
+                    <label for="title_post">Title</label>
+                    <input type="text" class="form-control" name="title" id="title_post" required>
+                    
+                    <label for="description_post">Description</label>
+                    <textarea class="form-control" name="description" id="description_post" row="3"></textarea>
+                </form>
+                <p class="text-danger d-none" id="warning_create">Title cannot be empty</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" onclick="saveData()">Save Data</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex vh-100 justify-content-center align-items-center">
     <div class="card w-25 h-50 border-primary">
         <div class="card-header">To Do List</div>
-        <div class="card-body">
+        <div class="card-body overflow-auto">
             <ul class="list-group">
                 {% for todo in todos %}
                     {% if todo.description is none %}
-                        <button type="btn" class="btn btn-outline-dark text-start my-1">{{ todo.title }}</button>
+                        <button type="btn" class="btn btn-outline-dark text-start my-1 btn-event" data-bs-toggle="modal" data-bs-target="#updateTodo" value="{{todo.id}}" onclick=updateForm(this)>{{ todo.title }}</button>
                     {% else %}
-                        <button type="btn" class="btn btn-outline-dark text-start my-1">
+                        <button type="btn" class="btn btn-outline-dark text-start my-1 btn-event" data-bs-toggle="modal" data-bs-target="#updateTodo" value="{{todo.id}}" onclick=updateForm(this)>
                             <div class="d-flex">
                                 <p class="flex-grow-1">{{ todo.title }}</p>
                                 <i class="bi bi-list"></i>
@@ -25,9 +77,78 @@ Home
             </ul>
         </div>
         <div class="card-footer">
-            <button class="btn btn-success w-100" type="button"> <i class="bi-plus-circle"></i> Add a new task</a>
+            <button class="btn btn-success w-100" type="button" data-bs-toggle="modal" data-bs-target="#createTodo"> <i class="bi-plus-circle"></i> Add a new task</a>
         </div>
     </div>
 </div>
 
+{% endblock %}
+
+{% block script %}
+<!-- Script -->
+
+async function updateForm(element){
+    document.getElementById("update_form").action = "{{api_endpoint}}" + "todo/" + element.value;
+    let data = await fetch(`{{api_endpoint}}todo/${element.value}`).then((response) => response.json())
+    document.getElementById("title").value = data["title"];
+    document.getElementById("id").value = data["id"];
+    let todo_id = data["id"]
+    document.getElementById("delete").value = todo_id;
+    if (data["description"] != null){
+        document.getElementById("description").value = data["description"];
+    }
+    else{
+        document.getElementById("description").value = "";
+    }
+}
+
+function checkTitleIsEmpty(title, document_id){
+    if (title == ""){
+        document.getElementById(document_id).classList.remove("d-none");
+        return true;
+    }
+    return false;
+}
+async function submitForm(){
+    let todo_id = document.getElementById("id").value;
+    let title = document.getElementById("title").value;
+    if(checkTitleIsEmpty(title, "warning_update")){
+        return
+    }
+    let description = document.getElementById("description").value;
+    request_body = {'title': `${title}`, 'description': `${description}`}
+    console.log(request_body)
+    await fetch(`{{api_endpoint}}todo/${todo_id}`,{
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(request_body)
+    });
+    window.location.reload();
+}
+
+async function saveData(){
+    let create_todo_form = document.getElementById("create_todo_form")
+    let title = document.getElementById("title_post").value;
+    if(checkTitleIsEmpty(title, "warning_create")){
+        return
+    }
+    let description = document.getElementById("description_post").value;
+    
+    await fetch(`{{api_endpoint}}todo/new/`, {
+        method: 'POST',
+        headers: {"Content-Type": 'application/x-www-form-urlencoded'},
+        body: `title=${title}&description=${description}`
+    })
+    create_todo_form.reset();
+    window.location.reload();
+}
+
+async function deleteTodo(element){
+    let todo_id = element.value;
+    console.log(todo_id)
+    await fetch(`{{api_endpoint}}todo/${todo_id}`, {
+        method: "DELETE"
+    })
+    window.location.reload();
+}
 {% endblock %}

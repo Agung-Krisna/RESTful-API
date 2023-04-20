@@ -9,8 +9,11 @@ API_ENDPOINT = "http://127.0.0.1:8000/"
 
 @app.get("/")
 def home():
-    json_list = requests.get(API_ENDPOINT+"list_todos").json()
-    return render_template("home.html", todos=json_list)
+    try:
+        json_list = requests.get(API_ENDPOINT+"list_todos").json()
+    except:
+        return "can't find the API endpoint"
+    return render_template("home.html", todos=json_list, api_endpoint=API_ENDPOINT)
 
 @app.get("/description")
 def description():
