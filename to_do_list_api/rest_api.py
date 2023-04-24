@@ -5,6 +5,7 @@ from tortoise_models import ToDo
 from tortoise.contrib.fastapi import register_tortoise
 from tortoise.contrib.pydantic import pydantic_model_creator
 from tortoise import run_async
+from pydantic import BaseModel
 
 # create connection with database
 dbInit()
@@ -25,7 +26,9 @@ register_tortoise(
 todo_pydantic = pydantic_model_creator(ToDo)
 
 # serialize object into JSON without id (no readonly value)
-todo_pydantic_without_id = pydantic_model_creator(ToDo, exclude_readonly=True)
+class ToDoNoId(BaseModel):
+    title: str
+    description: str
 
 @app.get("/")
 async def home():
@@ -37,7 +40,7 @@ async def get_list():
 
 @app.get("/todo/{todo_id}")
 async def get_todo(todo_id: int):
-    return await todo_pydantic.from_queryset_single(ToDo.get(_id=todo_id))
+    return await todo_pydantic.from_queryset_single(ToDo.get(id=todo_id))
 
 @app.post("/todo/new/")
 async def post_todo(title=Form(...), description=Form(None)):
@@ -45,11 +48,11 @@ async def post_todo(title=Form(...), description=Form(None)):
     return await todo_pydantic.from_tortoise_orm(todo)
 
 @app.put("/todo/{todo_id}")
-async def update_todo(todo_id: int, todo_object: todo_pydantic_without_id):
-    todo = await ToDo.filter(_id=todo_id).update(**todo_object.dict())
-    return await todo_pydantic.from_queryset_single(ToDo.get(_id=todo_id))
+async def update_todo(todo_id: int, todo_object: ToDoNoId):
+    todo = await ToDo.filter(id=todo_id).update(**todo_object.dict())
+    return await todo_pydantic.from_queryset_single(ToDo.get(id=todo_id))
 
 @app.delete("/todo/{todo_id}")
 async def delete_todo(todo_id: int):
-    await ToDo.filter(_id=todo_id).delete()
+    await ToDo.filter(id=todo_id).delete()
     return {"deletion_id": todo_id}
